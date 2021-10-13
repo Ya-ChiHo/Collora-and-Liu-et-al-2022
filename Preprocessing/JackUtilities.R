@@ -9,14 +9,16 @@ library(ggrepel)
 library(tidyr)
 library(reshape2)
 
+#these functions are for generating consistently sized pdf figures
 pubfig169p<-function(filename){pdf(file  = paste(filename,".pdf", sep=""),height = 9, width = 16)}
 pubfigsqp<-function(filename){pdf(file  = paste(filename,".pdf", sep=""),height = 9, width = 9)}
 pubfiglongp<-function(filename){pdf(file  = paste(filename,".pdf", sep=""),height = 9, width = 48)}
 
+#this function is for writing a list of genes to a file for the java version of GSEA
 write.GSEA<-function(seuratoutput, fileprefix){
   write.table(seuratoutput["avg_logFC"], file = paste(fileprefix, "rnk", sep="."), quote=F, row.names = T, col.names = F, sep = "\t")
 }
-
+#prints the most correlated and anticorrelated genes with a gene of interest
 print.cor<-function(cormatrix, gene, ngene=50){
   for (i in 1:length(cormatrix)){
   print(names(cormatrix)[[i]])
@@ -27,13 +29,14 @@ print.cor<-function(cormatrix, gene, ngene=50){
   }
 }
 
+#grabs the most correlated genes with gene of interest
 extract.cor<-function(cormatrix, gene, ngene=50){
   test<-list()
   for (i in 1:length(cormatrix)){test[[i]]<-names(sort(cormatrix[[i]][gene,],decreasing = T)[1:ngene])}
   return(test)
 }
 
-
+#generates a heatmap based on metadata
 mean_meta_heatmap<-function(seuratobj,feature,grouping_x, grouping_y, limits=NA){
   meta<-seuratobj@meta.data
   data<-meta%>%group_by(!!sym(grouping_x), !!sym(grouping_y))%>%summarise(vr=mean(!!sym(feature)))
@@ -42,7 +45,7 @@ mean_meta_heatmap<-function(seuratobj,feature,grouping_x, grouping_y, limits=NA)
   }else{
   print(ggplot(data, aes(fill=vr, x=!!sym(grouping_x), y=!!sym(grouping_y)))+geom_tile()+scale_fill_gradient(low="gray64", high="gray30", limits=limits, oob=squish)+labs(title=feature)+theme_classic())}
 }
-
+#used to integrating AUCell data 
 Add_AUC_calls<-function(seuratobj, AUC_asssignments, labels=NA){
   if (is.na(labels)){
     labels<-names(AUC_asssignments)
@@ -91,7 +94,7 @@ genes_heatmap<-function(seuratobj, featurelist, grouping_var, level=TRUE){
 }
 }
 
-#GSEA Ploting 
+#GSEA Ploting - many of these functions were refactored/tooled for GSEA in their respective GSEA scripts. 
 
 #function 0 takes all my inputs and figures it out (reduce human error)
 GSEAWrap<-function(gmtfile,seuratoutput,name="undefined",metric="avg_logFC"){
@@ -140,7 +143,7 @@ GSEAComparisons<-function(gmtfile,seuratobj_lists, IDs, metric="avg_logFC"){
   results<-bind_rows(results)
   return(results)
 }
-
+#does the actual plotting, can plot multiple conditions at once
 GSEAEnrichmentPlotComparison<-function(PathwayName, GSEACompOut, returnplot="none"){
   GSEACompOut<-GSEACompOut[GSEACompOut$pathway==PathwayName,]
   curves<-list()
@@ -196,110 +199,8 @@ return(p)}
 
 
 # Build dataframe for plotting
-GSEA_heatmap<-function(GSEACompOut, groupgrep=NA, Pathwaylist, return_df=FALSE, grouporder=NA){
-  #subset for specific pathway, specific group 
-  GSEACompOut<-GSEACompOut[grep(paste(Pathwaylist, collapse="|"),GSEACompOut$pathway),]
-  GSEACompOut$pathway<-factor(GSEACompOut$pathway, levels = rev(Pathwaylist))
-  #gsub to remove group 
-  if(!is.na(groupgrep)){GSEACompOut$group<-gsub(groupgrep,"", GSEACompOut$name)}else{GSEACompOut$group<-"None"}
-  #reduce dataframe to NES pathway pvalue and group name 
-  if(!is.na(grouporder)){GSEACompOut$group<-factor(GSEACompOut$group, levels = grouporder)}
-  Heatmapframe<-GSEACompOut[,c("pathway","padj","group","NES")]
-  #convert pvalues to Stars 
-  Heatmapframe$stars <- cut(Heatmapframe$padj, breaks=c(-Inf, 0.001, 0.01, 0.05, Inf), label=c("***", "**", "*", ""))  # Create column of significance labels
-  if(return_df==TRUE){return(Heatmapframe)}
-  # Plot everything
-  p <- ggplot(aes(x=group, y=pathway, fill=NES), data=Heatmapframe)
-  p <- p + geom_tile() + scale_fill_gradient2(low="blue", mid="white", high="red") + 
-    #   geom_text(aes(label=stars, color=value), size=8) + scale_colour_gradient(low="grey30", high="white", guide="none") +
-    geom_text(aes(label=stars), color="black", size=5) + 
-    theme_bw() + theme(axis.text.x=element_text(angle = -45, hjust = 0))
-  return(p)
-}
 
-#subsets to only pathways that have at least 0.01 cutoff
-SelectPathways<-function(GSEACompOut, groupgrep, cutoff=0.01){
-  GSEACompOut<-GSEACompOut[grep(groupgrep, GSEACompOut$name),]
-  pathways<-names(table(GSEACompOut$pathway[GSEACompOut$padj<cutoff]))
-  GSEACompOut<-GSEACompOut[GSEACompOut$pathway %in% pathways,]
-  return(GSEACompOut)}
-#gets count of each significant pathway 
-SummarizePathways<-function(GSEACompOut, cutoff=0.01){return(as.data.frame(table(GSEACompOut$pathway[GSEACompOut$padj<cutoff])))}
-
-#merge dataframes, make comparisons
-MergePathways<-function(SumPathList, NamesList){
-  
-  for (i in 1:length(SumPathList)){
-    colnames(SumPathList[[i]])<-c("pathway",NamesList[[i]])
-    if(i>1){merged<-merge(merged, SumPathList[[i]], all=TRUE)}else{merged<-SumPathList[[i]]}
-  }
-  merged[is.na(merged)]<-0
-  return(merged)
-}
-
-#grab sets
-
-GetIntPaths<-function(counts, checkints, cutoff=NA, num=10,max=50){
-  check<-colnames(counts)[checkints]
-  if(!is.na(cutoff)){
-    intpaths<-list()
-    for (i in 1:length(check)){
-      intpaths[[check[[i]]]]<-counts$pathway[counts[[check[[i]]]]>cutoff|counts[[check[[i]]]]<(-(cutoff))]
-    }
-    return(intpaths)
-  }else{
-    
-    intpaths<-list()
-    for (i in 1:length(check)){
-      
-      current<-top_n(counts, num,!!sym(check[[i]]))
-      intpaths[[paste(check[[i]], "top",sep="_")]]<-na.omit(current$pathway[1:max]) 
-      current<-top_n(counts, -num,!!sym(check[[i]]))
-      intpaths[[paste(check[[i]], "bottom",sep="_")]]<-na.omit(current$pathway[1:max])
-    }
-  }
-  intpaths<-intpaths[1:(length(intpaths)-2)]
-return(intpaths)
-}
-#comp is for looking for pathways different between two conditions, absolute is for finding the top pathways for a condition
-WrapPaths<-function(GSEACompOut, greplist, cutoff=0.01, mode="comp", n=20,cutoff_path=NA){
-  conditions<-list()
-  for(i in 1:length(greplist)){conditions[[i]]<-SelectPathways(GSEACompOut, greplist[[i]], cutoff=cutoff)}
-  pathways<-list()
-  if(mode=="absolute"){for(i in 1:length(conditions)){
-    
-    pathways[[paste(greplist[[i]],"top",sep="_")]]<-top_n(conditions[[i]], n=n,NES)
-    pathways[[paste(greplist[[i]],"top",sep="_")]]<-unique(pathways[[paste(greplist[[i]],"top",sep="_")]][["pathway"]])
-    
-    pathways[[paste(greplist[[i]],"bottom",sep="_")]]<-top_n(conditions[[i]], n=-n,NES)
-    pathways[[paste(greplist[[i]],"bottom",sep="_")]]<-unique(pathways[[paste(greplist[[i]],"bottom",sep="_")]][["pathway"]])
-    
-  }
-    return(pathways)}
-  
-  for(i in 1:length(conditions)){pathways[[i]]<-SummarizePathways(conditions[[i]], cutoff=cutoff)}
-  pathways<-MergePathways(pathways, greplist)
-  done2<-done<-"yes"
-  while(done!="N"){
-    print(names(pathways))
-    
-    user<-as.numeric(readline(prompt="First comparison"))
-    user2<-as.numeric(readline(prompt="Second comparison"))
-    compname<-paste(names(pathways)[user],names(pathways[user2]), sep="_")
-    
-    pathways[[compname]]<-pathways[,user]-pathways[,user2]
-    done<-readline(prompt = "Done! Do you want to make another comparison? (Y/N) ")
-  }
-  comp<-c()
-  while(!(1 %in%comp)){
-    print(names(pathways))
-    comp<-c(comp,as.numeric(readline(prompt = "Which comparisons do you want pathways for?[1 for done]")))
-  }
-  intpaths<-GetIntPaths(pathways, comp, cutoff=cutoff_path, num=n)
-  return(intpaths)
-}
-
-#modified from: https://divingintogeneticsandgenomics.rbind.io/post/stacked-violin-plot-for-visualizing-single-cell-data-in-seurat/
+#modified from: https://divingintogeneticsandgenomics.rbind.io/post/stacked-violin-plot-for-visualizing-single-cell-data-in-seurat/ until line 249
 
 modify_vlnplot<- function(obj, 
                           feature, 
@@ -346,31 +247,6 @@ StackedVlnPlot<- function(obj, features,
   return(p)
 }
 
-#extracts the key information for each clone. 
-TopClones<-function(metadata, topn=Inf, annoN=100, weight="B_cdr3.Priority_1", time=1,
-                    cols=c("PT","B_cdr3.Priority_1","B_v_gene.Priority_1",
-                           "B_d_gene.Priority_1","B_j_gene.Priority_1")){
-  timecol<-paste(weight, "size_time", time, sep="_")
-  cols<-c(cols, timecol)
-  metadata<-metadata[!duplicated(metadata[[weight]]),]
-  metadata<-metadata[order(-metadata[[timecol]]),]
-  if(topn!=Inf){metadata<-metadata[1:topn,]}
-  metadata<-metadata[,cols]
-  colnames(metadata)<-c("PT","CDR3","V","D","J","Size")
-  if(!is.na(annoN)){metadata<-MarkClones(metadata, annoN=annoN)}
-  metadata$time<-time
-  return(metadata)
-}
-
-#annotates the first n columns in the order given
-MarkClones<-function(metadata, annoN=100, weight="Size",altanno="others"){
-  anno<-c()
-  for(i in 1:length(metadata[[weight]])){
-    anno[[i]]<-ifelse(i<=annoN, i, altanno)
-  }
-  metadata$rank<-anno
-  return(metadata)
-}
 
 mode <- function(cat){
   names(table(cat))[which.max(table(cat))]
@@ -429,7 +305,7 @@ splitcorheatmap<-function(cor, genes, prefix, n_ext=50,exp=TRUE){
     ggsave(filename = savename, plot = p, device = "pdf", width = 10, height = 9)
   
 }
-
+#makes all hte comparisons in each correlation plot
 splitwrap<-function(cor, genes, n_ext=50, exp=FALSE, prefix="matrix"){
   genes<-unique(genes)
   plot<-c()
@@ -443,7 +319,7 @@ splitwrap<-function(cor, genes, n_ext=50, exp=FALSE, prefix="matrix"){
     }
   }
 }
-
+#basic volcano function for seurat output
 VolPlot<-function(results,top=TRUE, adthresh=TRUE, thresh=0.2, threshn=30, Title=NA){
   results$value<-(-log10(results$p_val_adj))
   results$value[results$value==Inf]<-300
@@ -458,7 +334,7 @@ VolPlot<-function(results,top=TRUE, adthresh=TRUE, thresh=0.2, threshn=30, Title
   }
   return(p)
 }
-
+#quick selection of top n genes basically
 AdaptiveThreshold<-function(results, n=30,Tstart=0.25){
   m=Inf
   while(n<=m){
@@ -468,7 +344,7 @@ AdaptiveThreshold<-function(results, n=30,Tstart=0.25){
   return(Tstart)
 }
 
-
+#as above but better for certain circumstances. 
 splitwrap<-function(cor, genes, n_ext=50, exp=FALSE, prefix="matrix"){
   genes<-unique(genes)
   plot<-c()
