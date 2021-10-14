@@ -21,6 +21,8 @@ pubfig169p("Figures/Fig1stuff/clusterumap")
 DimPlot(samples, group.by = "memory", label=T)
 dev.off()
 
+
+
 samples$cluster_names<-factor(samples$cluster_names, levels = rev(levels(samples$cluster_names)))
 Idents(samples)<-samples$cluster_names
 
@@ -38,6 +40,13 @@ meta<-meta[meta$TBX21==TRUE,]
 pubfigsqp("Figures/Fig1stuff/TBX21positive")
 ggplot(meta, aes(x=infection, y=freq ))+geom_jitter()+theme_classic()
 dev.off()
+
+samples$log2fc<-log2(samples$results_freq*10000)
+
+pubfig169p("Figures/Fig1stuff/clusterumap")
+FeaturePlot(samples, features="log2fc", min.cutoff='q5', max.cutoff='q95')
+dev.off()
+
 #things are not normal so we cant T test them
 wilcox.test(meta$freq[meta$infection=="Viremic"], meta$freq[meta$infection=="Suppressed"])
 wilcox.test(meta$freq[meta$infection=="Viremic"],meta$freq[meta$infection=="Uninfected"])
