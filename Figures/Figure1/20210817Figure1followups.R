@@ -13,6 +13,14 @@ samples<-readRDS("Objects/20210519UnstimulatedMaster.rds")
 
 genelist<-c("GZMB","CCL5","TBX21","GZMK","GATA3","RORC","CTSH","CCR6","FOXP3","IL2RA","MKI67","CXCR5","CCR7","SELL","TCF7","percent.mt")
 
+pubfig169p("Figures/Fig1stuff/clusterumap")
+DimPlot(samples, group.by = "cluster_names", label=T)
+dev.off()
+
+pubfig169p("Figures/Fig1stuff/clusterumap")
+DimPlot(samples, group.by = "memory", label=T)
+dev.off()
+
 samples$cluster_names<-factor(samples$cluster_names, levels = rev(levels(samples$cluster_names)))
 Idents(samples)<-samples$cluster_names
 
