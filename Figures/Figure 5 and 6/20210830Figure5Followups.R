@@ -13,9 +13,21 @@ pubfiglongp<-function(filename){pdf(file  = paste(filename,".pdf", sep=""),heigh
 unstim<-readRDS("Objects/20210519UnstimulatedMaster.rds")
 stim<-readRDS("Objects/210623masterstimulated.rds")
 
+
+
 X<-readRDS("Objects/20210601CellsincloneswithHIV.rds")
 stim$HIV<-colnames(stim)%in%X
 unstim$HIV<-colnames(unstim)%in%X
+
+stim2<-subset(stim, bulkn>1)
+pubfig169p("Figures/Fig6stuff/stimclones")
+DimPlot(stim2, group_by="HIV")
+dev.off()
+unstim2<-subset(unstim, results_count>1)
+pubfig169p("Figures/Fig6stuff/unstimclones")
+DimPlot(unstim2, group_by="HIV")
+dev.off()
+
 
 metau<-unstim@meta.data
 metas<-stim@meta.data
