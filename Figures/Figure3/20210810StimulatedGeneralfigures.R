@@ -31,6 +31,10 @@ pubfig169p("Figures/stimulatedHW/clusterumap")
 DimPlot(samples, group.by = "cluster_annotation", label=T)
 dev.off()
 
+pubfig169p("Figures/stimulatedHW/memoryumap")
+DimPlot(samples, group.by = "memory", label=T)
+dev.off()
+
 samples$PT<-factor(samples$PT, levels=c("236","640","829","739","799","910","HD2004","HD2022"))
 pubfig169p("Figures/stimulatedHW/PTumap")
 DimPlot(samples, group.by="PT")+
