@@ -43,7 +43,7 @@ dev.off()
 
 samples$log2fc<-log2(samples$results_freq*10000)
 
-pubfig169p("Figures/Fig1stuff/clusterumap")
+pubfig169p("Figures/Fig1stuff/clonesizeumap")
 FeaturePlot(samples, features="log2fc", min.cutoff='q5', max.cutoff='q95')
 dev.off()
 
