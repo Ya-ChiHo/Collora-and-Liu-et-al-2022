@@ -14,6 +14,12 @@ stim<-readRDS("Objects/210623masterstimulated.rds")
 
 metau<-unstim@meta.data
 metas<-stim@meta.data
+pubfig169p("Figures/Fig4stuff/stimHIVcells")
+DimPlot(stim, cells.highlight=grep(TRUE, stim$HIVpositive))+No_Legend()
+dev.off()
+pubfig169p("Figures/Fig4stuff/unstimHIVcells")
+DimPlot(unstim, cells.highlight=grep("infected", unstim$HIV_infected))+No_Legend()
+dev.off()
 
 metau$HIV_infected<-factor(metau$HIV_infected, levels=c("infected","uninfected"))
 metas$HIVpositive<-factor(metas$HIVpositive, levels=c(TRUE,FALSE))
