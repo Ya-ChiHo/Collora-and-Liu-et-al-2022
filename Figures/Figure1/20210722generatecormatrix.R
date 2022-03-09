@@ -22,6 +22,7 @@ for(i in 1:length(samples)){
   }
   }
 
+#doing the same for unstimulated first by participant then infection condition
 samples<-readRDS("Objects/20210519UnstimulatedMaster.rds")
 samples$keep<-!is.na(samples$results_count)
 samples<-subset(samples, keep==TRUE) 
