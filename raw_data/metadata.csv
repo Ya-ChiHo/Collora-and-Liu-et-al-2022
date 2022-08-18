@@ -1,0 +1,5 @@
+﻿DS739,DS799,DS910,DV739,IS236,IS640,DV910,IV236,IS829,IV640,IV829,DV799,M1,M2,M3,RDS739,RDS799,RIV236,RIV829
+Delayed,Delayed,Delayed,Delayed,Immediate,Immediate,Delayed,Immediate,Immediate,Immediate,Immediate,Delayed,NA,NA,NA,Delayed,Delayed,Immediate,Immediate
+Suppressed,Suppressed,Suppressed,Viremic,Suppressed,Suppressed,Viremic,Viremic,Suppressed,Viremic,Viremic,Viremic,NA,NA,NA,Suppressed,Suppressed,Viremic,Viremic
+Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,Yes,Yes,Yes
+3,3,1,3,3,1,1,3,3,1,3,3,2,2,2,4,4,4,4
